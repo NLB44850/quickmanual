@@ -12,7 +12,6 @@ export default function ManualSummarizerDemo() {
   const [stream, setStream] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
 
-  // Données de démonstration
   const demoData = {
     pdf: {
       product: "Machine à café Nespresso Vertuo",
@@ -92,7 +91,6 @@ export default function ManualSummarizerDemo() {
 
   const simulateAnalysis = (type) => {
     setLoading(true);
-    // Simulation d'un délai d'analyse
     setTimeout(() => {
       setSummary(demoData[type]);
       setLoading(false);
@@ -112,7 +110,6 @@ export default function ManualSummarizerDemo() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 pb-6">
       <div className="max-w-2xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-4 pt-2">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1 flex items-center justify-center gap-2">
             <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600" />
@@ -121,7 +118,6 @@ export default function ManualSummarizerDemo() {
           <p className="text-sm text-gray-600">Résumez vos manuels en quelques secondes</p>
         </div>
 
-        {/* Demo Banner */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 flex items-start gap-2">
           <Info className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-yellow-800">
@@ -129,7 +125,6 @@ export default function ManualSummarizerDemo() {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="bg-white rounded-xl shadow-lg mb-3">
           <div className="flex border-b">
             <button
@@ -225,7 +220,6 @@ export default function ManualSummarizerDemo() {
           </div>
         </div>
 
-        {/* Results */}
         {summary && (
           <div className="space-y-3 animate-fadeIn">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-800 px-1">{summary.product}</h2>
