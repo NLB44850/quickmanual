@@ -13,7 +13,7 @@ export default function ManualSummarizerPro() {
   const [stream, setStream] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
   
-  const API_KEY = typeof window !== 'undefined' && window.QuickManual_api_key;
+  const API_KEY = typeof window !== 'undefined' && window.REACT_APP_ANTHROPIC_API_KEY;
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -99,7 +99,7 @@ export default function ManualSummarizerPro() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.QuickManual_api_key || '',
+          'x-api-key': process.env.REACT_APP_ANTHROPIC_API_KEY || '',
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
@@ -156,7 +156,7 @@ export default function ManualSummarizerPro() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.QuickManual_api_key || '',
+          'x-api-key': process.env.REACT_APP_ANTHROPIC_API_KEY || '',
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
@@ -214,7 +214,7 @@ export default function ManualSummarizerPro() {
           <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-2xl p-4 mb-6 flex items-start gap-3 shadow-md">
             <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-gray-800">
-              <strong className="text-red-600">⚠️ Clé API manquante</strong> - Configurez QuickManual_api_key dans les variables d'environnement Vercel
+              <strong className="text-red-600">⚠️ Clé API manquante</strong> - Configurez REACT_APP_ANTHROPIC_API_KEY dans les variables d'environnement Vercel
             </div>
           </div>
         )}
@@ -469,4 +469,3 @@ export default function ManualSummarizerPro() {
     </div>
   );
 }
-
