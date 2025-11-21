@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, Zap, Shield, Wrench, BookOpen, Camera, ImagePlus, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function ManualSummarizerPro() {
@@ -14,6 +14,14 @@ export default function ManualSummarizerPro() {
   const [cameraActive, setCameraActive] = useState(false);
   
   const API_KEY = typeof window !== 'undefined' && window.REACT_APP_ANTHROPIC_API_KEY;
+
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -43,16 +51,25 @@ export default function ManualSummarizerPro() {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+        video: { 
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
       });
       setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
       setCameraActive(true);
       setError(null);
+      
+      setTimeout(() => {
+        if (videoRef.current && mediaStream) {
+          videoRef.current.srcObject = mediaStream;
+        }
+      }, 100);
     } catch (err) {
-      setError('Impossible d\'accéder à la caméra. Veuillez autoriser l\'accès dans les paramètres.');
+      console.error('Camera error:', err);
+      setError('Impossible d\'accéder à la caméra. Veuillez autoriser l\'accès dans les paramètres de votre navigateur.');
+      setCameraActive(false);
     }
   };
 
@@ -61,11 +78,14 @@ export default function ManualSummarizerPro() {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     setCameraActive(false);
   };
 
   const capturePhoto = () => {
-    if (videoRef.current) {
+    if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
       canvas.height = videoRef.current.videoHeight;
@@ -78,7 +98,9 @@ export default function ManualSummarizerPro() {
         setImagePreview(canvas.toDataURL('image/jpeg'));
         stopCamera();
         setSummary(null);
-      }, 'image/jpeg');
+      }, 'image/jpeg', 0.95);
+    } else {
+      setError('La caméra n\'est pas prête. Veuillez réessayer dans quelques secondes.');
     }
   };
 
@@ -99,7 +121,7 @@ export default function ManualSummarizerPro() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.REACT_APP_ANTHROPIC_API_KEY || '',
+          'x-api-key': API_KEY || '',
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
@@ -156,7 +178,7 @@ export default function ManualSummarizerPro() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': process.env.REACT_APP_ANTHROPIC_API_KEY || '',
+          'x-api-key': API_KEY || '',
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
@@ -196,6 +218,19 @@ export default function ManualSummarizerPro() {
     }
   };
 
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'pdf') {
+      stopCamera();
+      setImageFile(null);
+      setImagePreview(null);
+    } else {
+      setFile(null);
+    }
+    setSummary(null);
+    setError(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 p-4 pb-8">
       <div className="max-w-2xl mx-auto">
@@ -210,7 +245,7 @@ export default function ManualSummarizerPro() {
           <p className="text-gray-700 font-medium">Analysez vos manuels avec l'IA ✨</p>
         </div>
 
-        {!process.env.REACT_APP_ANTHROPIC_API_KEY && (
+        {!API_KEY && (
           <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-2xl p-4 mb-6 flex items-start gap-3 shadow-md">
             <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-gray-800">
@@ -222,7 +257,8 @@ export default function ManualSummarizerPro() {
         <div className="bg-white rounded-2xl shadow-xl mb-6 overflow-hidden border-2 border-indigo-100">
           <div className="flex bg-gradient-to-r from-indigo-50 to-purple-50">
             <button
-              onClick={() => { setActiveTab('pdf'); stopCamera(); }}
+              type="button"
+              onClick={() => handleTabChange('pdf')}
               className={`flex-1 py-4 px-4 font-bold text-sm transition-all duration-300 ${
                 activeTab === 'pdf' 
                   ? 'text-indigo-600 border-b-4 border-indigo-600 bg-white scale-105' 
@@ -233,7 +269,8 @@ export default function ManualSummarizerPro() {
               Manuel PDF
             </button>
             <button
-              onClick={() => { setActiveTab('image'); setFile(null); }}
+              type="button"
+              onClick={() => handleTabChange('image')}
               className={`flex-1 py-4 px-4 font-bold text-sm transition-all duration-300 ${
                 activeTab === 'image' 
                   ? 'text-purple-600 border-b-4 border-purple-600 bg-white scale-105' 
@@ -264,6 +301,7 @@ export default function ManualSummarizerPro() {
                 </div>
                 {file && (
                   <button 
+                    type="button"
                     onClick={analyzePDF} 
                     disabled={loading} 
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:scale-100 text-base"
@@ -284,6 +322,7 @@ export default function ManualSummarizerPro() {
                 {!cameraActive ? (
                   <div className="space-y-4">
                     <button 
+                      type="button"
                       onClick={startCamera} 
                       className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-base"
                     >
@@ -313,6 +352,7 @@ export default function ManualSummarizerPro() {
                           <img src={imagePreview} alt="Aperçu" className="w-full h-52 object-contain bg-gray-100" />
                         </div>
                         <button 
+                          type="button"
                           onClick={analyzeImage} 
                           disabled={loading} 
                           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:scale-100 text-base"
@@ -331,17 +371,26 @@ export default function ManualSummarizerPro() {
                   </div>
                 ) : (
                   <div className="space-y-4 animate-fadeIn">
-                    <div className="rounded-2xl overflow-hidden border-4 border-purple-300 shadow-xl">
-                      <video ref={videoRef} autoPlay playsInline className="w-full" />
+                    <div className="rounded-2xl overflow-hidden border-4 border-purple-300 shadow-xl bg-black">
+                      <video 
+                        ref={videoRef} 
+                        autoPlay 
+                        playsInline 
+                        muted
+                        className="w-full"
+                        style={{ minHeight: '300px' }}
+                      />
                     </div>
                     <div className="flex gap-3">
                       <button 
+                        type="button"
                         onClick={capturePhoto} 
                         className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         📸 Capturer
                       </button>
                       <button 
+                        type="button"
                         onClick={stopCamera} 
                         className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-4 rounded-xl font-bold hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
