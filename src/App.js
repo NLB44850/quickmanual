@@ -12,8 +12,6 @@ export default function ManualSummarizerPro() {
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
-  
-  const API_KEY = typeof window !== 'undefined' && window.REACT_APP_ANTHROPIC_API_KEY;
 
   useEffect(() => {
     return () => {
@@ -104,6 +102,27 @@ export default function ManualSummarizerPro() {
     }
   };
 
+  const callAPI = async (messages) => {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages,
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Erreur ${response.status}: Impossible d'analyser`);
+    }
+
+    return await response.json();
+  };
+
   const analyzePDF = async () => {
     if (!file) return;
     setLoading(true);
@@ -117,45 +136,27 @@ export default function ManualSummarizerPro() {
         reader.readAsDataURL(file);
       });
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY || '',
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'document',
-                source: { type: 'base64', media_type: 'application/pdf', data: base64Data }
-              },
-              {
-                type: 'text',
-                text: 'Analyse ce manuel d\'utilisation et réponds UNIQUEMENT avec un JSON (sans balises markdown ni texte autour): {"product":"nom du produit","quickStart":"étapes essentielles pour démarrer en 2-3 phrases claires","safety":"consignes de sécurité principales en 2-3 phrases","maintenance":"conseils d\'entretien de base en 2-3 phrases","troubleshooting":"problèmes courants et solutions en 2-3 phrases"}'
-              }
-            ]
-          }]
-        })
-      });
+      const data = await callAPI([{
+        role: 'user',
+        content: [
+          {
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: base64Data }
+          },
+          {
+            type: 'text',
+            text: 'Analyse ce manuel d\'utilisation et réponds UNIQUEMENT avec un JSON (sans balises markdown ni texte autour): {"product":"nom du produit","quickStart":"étapes essentielles pour démarrer en 2-3 phrases claires","safety":"consignes de sécurité principales en 2-3 phrases","maintenance":"conseils d\'entretien de base en 2-3 phrases","troubleshooting":"problèmes courants et solutions en 2-3 phrases"}'
+          }
+        ]
+      }]);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `Erreur ${response.status}: Impossible d'analyser le manuel`);
-      }
-
-      const data = await response.json();
       const text = data.content.find(c => c.type === 'text')?.text || '';
       const clean = text.replace(/```json|```/g, '').trim();
       const parsedSummary = JSON.parse(clean);
       setSummary(parsedSummary);
     } catch (err) {
       console.error('Erreur:', err);
-      setError(err.message || 'Erreur lors de l\'analyse du manuel. Vérifiez votre clé API.');
+      setError(err.message || 'Erreur lors de l\'analyse du manuel. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -174,45 +175,27 @@ export default function ManualSummarizerPro() {
         reader.readAsDataURL(imageFile);
       });
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY || '',
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: imageFile.type, data: base64Data }
-              },
-              {
-                type: 'text',
-                text: 'Identifie le produit sur cette couverture de manuel et fournis les informations typiques pour ce type d\'appareil. Réponds UNIQUEMENT avec un JSON (sans balises markdown): {"product":"nom et modèle du produit identifié","quickStart":"étapes de démarrage typiques pour ce produit en 2-3 phrases","safety":"consignes de sécurité générales en 2-3 phrases","maintenance":"entretien de base typique en 2-3 phrases","troubleshooting":"problèmes courants et solutions en 2-3 phrases"}'
-              }
-            ]
-          }]
-        })
-      });
+      const data = await callAPI([{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: { type: 'base64', media_type: imageFile.type, data: base64Data }
+          },
+          {
+            type: 'text',
+            text: 'Identifie le produit sur cette couverture de manuel et fournis les informations typiques pour ce type d\'appareil. Réponds UNIQUEMENT avec un JSON (sans balises markdown): {"product":"nom et modèle du produit identifié","quickStart":"étapes de démarrage typiques pour ce produit en 2-3 phrases","safety":"consignes de sécurité générales en 2-3 phrases","maintenance":"entretien de base typique en 2-3 phrases","troubleshooting":"problèmes courants et solutions en 2-3 phrases"}'
+          }
+        ]
+      }]);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `Erreur ${response.status}: Impossible d'analyser l'image`);
-      }
-
-      const data = await response.json();
       const text = data.content.find(c => c.type === 'text')?.text || '';
       const clean = text.replace(/```json|```/g, '').trim();
       const parsedSummary = JSON.parse(clean);
       setSummary(parsedSummary);
     } catch (err) {
       console.error('Erreur:', err);
-      setError(err.message || 'Erreur lors de l\'analyse de l\'image. Vérifiez votre clé API.');
+      setError(err.message || 'Erreur lors de l\'analyse de l\'image. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -244,15 +227,6 @@ export default function ManualSummarizerPro() {
           </div>
           <p className="text-gray-700 font-medium">Analysez vos manuels avec l'IA ✨</p>
         </div>
-
-        {!API_KEY && (
-          <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-2xl p-4 mb-6 flex items-start gap-3 shadow-md">
-            <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-gray-800">
-              <strong className="text-red-600">⚠️ Clé API manquante</strong> - Configurez REACT_APP_ANTHROPIC_API_KEY dans les variables d'environnement Vercel
-            </div>
-          </div>
-        )}
 
         <div className="bg-white rounded-2xl shadow-xl mb-6 overflow-hidden border-2 border-indigo-100">
           <div className="flex bg-gradient-to-r from-indigo-50 to-purple-50">
