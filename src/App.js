@@ -1,39 +1,28 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, Zap, Shield, Wrench, BookOpen, Camera, ImagePlus, Info, Sparkles } from 'lucide-react';
+import { Upload, FileText, Zap, Shield, Wrench, BookOpen, Camera, ImagePlus, Sparkles, AlertCircle } from 'lucide-react';
 
-export default function ManualSummarizerDemo() {
+export default function ManualSummarizerPro() {
   const [file, setFile] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState(null);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('pdf');
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
-
-  const demoData = {
-    pdf: {
-      product: "Machine à café Nespresso Vertuo",
-      quickStart: "Rincez le réservoir d'eau et remplissez-le. Insérez une capsule et fermez la tête. Appuyez sur le bouton pour lancer l'extraction automatique.",
-      safety: "Ne pas immerger l'appareil dans l'eau. Débrancher avant nettoyage. Ne pas utiliser avec des mains mouillées. Tenir hors de portée des enfants.",
-      maintenance: "Détartrer tous les 3 mois avec le kit fourni. Nettoyer le bac récupérateur quotidiennement. Vider le contenant à capsules régulièrement.",
-      troubleshooting: "Voyant rouge clignotant : détartrage nécessaire. Café trop froid : préchauffer la tasse. Pas d'extraction : vérifier le niveau d'eau et la capsule."
-    },
-    image: {
-      product: "Aspirateur robot Roomba i7+",
-      quickStart: "Branchez la station de charge. Placez le robot sur la base pour charger 3h. Téléchargez l'app iRobot. Appuyez sur CLEAN pour démarrer.",
-      safety: "Ne pas utiliser sur surfaces mouillées. Retirer les câbles du sol. Surveiller lors de la première utilisation. Ne pas aspirer liquides.",
-      maintenance: "Vider le bac après chaque utilisation. Nettoyer les brosses hebdomadairement. Remplacer les filtres tous les 2 mois. Nettoyer les capteurs mensuellement.",
-      troubleshooting: "Erreur 1 : nettoyer les roues. Erreur 2 : débloquer les brosses. Ne démarre pas : vérifier la charge. Aspiration faible : vider le bac."
-    }
-  };
+  
+  const API_KEY = typeof window !== 'undefined' && window.REACT_APP_ANTHROPIC_API_KEY;
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile && selectedFile.type === 'application/pdf') {
       setFile(selectedFile);
       setSummary(null);
+      setError(null);
+    } else {
+      setError('Veuillez sélectionner un fichier PDF valide');
     }
   };
 
@@ -45,6 +34,9 @@ export default function ManualSummarizerDemo() {
       reader.onload = (e) => setImagePreview(e.target.result);
       reader.readAsDataURL(selectedFile);
       setSummary(null);
+      setError(null);
+    } else {
+      setError('Veuillez sélectionner une image valide');
     }
   };
 
@@ -58,8 +50,9 @@ export default function ManualSummarizerDemo() {
         videoRef.current.srcObject = mediaStream;
       }
       setCameraActive(true);
+      setError(null);
     } catch (err) {
-      alert('Impossible d\'accéder à la caméra. Veuillez autoriser l\'accès dans les paramètres.');
+      setError('Impossible d\'accéder à la caméra. Veuillez autoriser l\'accès dans les paramètres.');
     }
   };
 
@@ -89,28 +82,123 @@ export default function ManualSummarizerDemo() {
     }
   };
 
-  const simulateAnalysis = (type) => {
-    setLoading(true);
-    setTimeout(() => {
-      setSummary(demoData[type]);
-      setLoading(false);
-    }, 2000);
-  };
-
-  const analyzePDF = () => {
+  const analyzePDF = async () => {
     if (!file) return;
-    simulateAnalysis('pdf');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = () => reject(new Error('Erreur de lecture du fichier'));
+        reader.readAsDataURL(file);
+      });
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.REACT_APP_ANTHROPIC_API_KEY || '',
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'document',
+                source: { type: 'base64', media_type: 'application/pdf', data: base64Data }
+              },
+              {
+                type: 'text',
+                text: 'Analyse ce manuel d\'utilisation et réponds UNIQUEMENT avec un JSON (sans balises markdown ni texte autour): {"product":"nom du produit","quickStart":"étapes essentielles pour démarrer en 2-3 phrases claires","safety":"consignes de sécurité principales en 2-3 phrases","maintenance":"conseils d\'entretien de base en 2-3 phrases","troubleshooting":"problèmes courants et solutions en 2-3 phrases"}'
+              }
+            ]
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `Erreur ${response.status}: Impossible d'analyser le manuel`);
+      }
+
+      const data = await response.json();
+      const text = data.content.find(c => c.type === 'text')?.text || '';
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsedSummary = JSON.parse(clean);
+      setSummary(parsedSummary);
+    } catch (err) {
+      console.error('Erreur:', err);
+      setError(err.message || 'Erreur lors de l\'analyse du manuel. Vérifiez votre clé API.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const analyzeImage = () => {
+  const analyzeImage = async () => {
     if (!imageFile) return;
-    simulateAnalysis('image');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = () => reject(new Error('Erreur de lecture'));
+        reader.readAsDataURL(imageFile);
+      });
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.REACT_APP_ANTHROPIC_API_KEY || '',
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: { type: 'base64', media_type: imageFile.type, data: base64Data }
+              },
+              {
+                type: 'text',
+                text: 'Identifie le produit sur cette couverture de manuel et fournis les informations typiques pour ce type d\'appareil. Réponds UNIQUEMENT avec un JSON (sans balises markdown): {"product":"nom et modèle du produit identifié","quickStart":"étapes de démarrage typiques pour ce produit en 2-3 phrases","safety":"consignes de sécurité générales en 2-3 phrases","maintenance":"entretien de base typique en 2-3 phrases","troubleshooting":"problèmes courants et solutions en 2-3 phrases"}'
+              }
+            ]
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `Erreur ${response.status}: Impossible d'analyser l'image`);
+      }
+
+      const data = await response.json();
+      const text = data.content.find(c => c.type === 'text')?.text || '';
+      const clean = text.replace(/```json|```/g, '').trim();
+      const parsedSummary = JSON.parse(clean);
+      setSummary(parsedSummary);
+    } catch (err) {
+      console.error('Erreur:', err);
+      setError(err.message || 'Erreur lors de l\'analyse de l\'image. Vérifiez votre clé API.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 p-4 pb-8">
       <div className="max-w-2xl mx-auto">
-        {/* Header avec animation */}
         <div className="text-center mb-6 pt-4 animate-slideDown">
           <div className="inline-flex items-center justify-center gap-3 bg-white px-6 py-3 rounded-full shadow-lg mb-3">
             <BookOpen className="w-8 h-8 text-indigo-600 animate-bounce" />
@@ -119,18 +207,18 @@ export default function ManualSummarizerDemo() {
             </h1>
             <Sparkles className="w-6 h-6 text-yellow-500 animate-pulse" />
           </div>
-          <p className="text-gray-700 font-medium">Résumez vos manuels instantanément ✨</p>
+          <p className="text-gray-700 font-medium">Analysez vos manuels avec l'IA ✨</p>
         </div>
 
-        {/* Demo Banner avec style amélioré */}
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl p-4 mb-6 flex items-start gap-3 shadow-md animate-fadeIn">
-          <Info className="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5 animate-pulse" />
-          <div className="text-sm text-gray-800">
-            <strong className="text-orange-600">🎯 Version démo</strong> - Testez l'interface avec des données d'exemple
+        {!process.env.REACT_APP_ANTHROPIC_API_KEY && (
+          <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-2xl p-4 mb-6 flex items-start gap-3 shadow-md">
+            <AlertCircle className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-gray-800">
+              <strong className="text-red-600">⚠️ Clé API manquante</strong> - Configurez REACT_APP_ANTHROPIC_API_KEY dans les variables d'environnement Vercel
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Tabs avec style amélioré */}
         <div className="bg-white rounded-2xl shadow-xl mb-6 overflow-hidden border-2 border-indigo-100">
           <div className="flex bg-gradient-to-r from-indigo-50 to-purple-50">
             <button
@@ -264,10 +352,16 @@ export default function ManualSummarizerDemo() {
                 )}
               </div>
             )}
+
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Results avec style amélioré */}
         {summary && (
           <div className="space-y-4 animate-slideUp">
             <div className="text-center bg-white rounded-2xl p-5 shadow-lg border-2 border-indigo-200">
