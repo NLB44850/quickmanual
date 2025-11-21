@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, FileText, Zap, Shield, Wrench, BookOpen, Camera, ImagePlus, Info } from 'lucide-react';
+import { Upload, FileText, Zap, Shield, Wrench, BookOpen, Camera, ImagePlus, Info, Sparkles } from 'lucide-react';
 
 export default function ManualSummarizerDemo() {
   const [file, setFile] = useState(null);
@@ -108,109 +108,156 @@ export default function ManualSummarizerDemo() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 pb-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 p-4 pb-8">
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-4 pt-2">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1 flex items-center justify-center gap-2">
-            <BookOpen className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600" />
-            QuickManual
-          </h1>
-          <p className="text-sm text-gray-600">Résumez vos manuels en quelques secondes</p>
+        {/* Header avec animation */}
+        <div className="text-center mb-6 pt-4 animate-slideDown">
+          <div className="inline-flex items-center justify-center gap-3 bg-white px-6 py-3 rounded-full shadow-lg mb-3">
+            <BookOpen className="w-8 h-8 text-indigo-600 animate-bounce" />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              QuickManual
+            </h1>
+            <Sparkles className="w-6 h-6 text-yellow-500 animate-pulse" />
+          </div>
+          <p className="text-gray-700 font-medium">Résumez vos manuels instantanément ✨</p>
         </div>
 
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 flex items-start gap-2">
-          <Info className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-yellow-800">
-            <strong>Version démo</strong> - Cette version affiche des données d'exemple pour tester l'interface.
+        {/* Demo Banner avec style amélioré */}
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl p-4 mb-6 flex items-start gap-3 shadow-md animate-fadeIn">
+          <Info className="w-6 h-6 text-orange-500 flex-shrink-0 mt-0.5 animate-pulse" />
+          <div className="text-sm text-gray-800">
+            <strong className="text-orange-600">🎯 Version démo</strong> - Testez l'interface avec des données d'exemple
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg mb-3">
-          <div className="flex border-b">
+        {/* Tabs avec style amélioré */}
+        <div className="bg-white rounded-2xl shadow-xl mb-6 overflow-hidden border-2 border-indigo-100">
+          <div className="flex bg-gradient-to-r from-indigo-50 to-purple-50">
             <button
               onClick={() => { setActiveTab('pdf'); stopCamera(); }}
-              className={`flex-1 py-3 px-3 font-semibold text-sm ${activeTab === 'pdf' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}
+              className={`flex-1 py-4 px-4 font-bold text-sm transition-all duration-300 ${
+                activeTab === 'pdf' 
+                  ? 'text-indigo-600 border-b-4 border-indigo-600 bg-white scale-105' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+              }`}
             >
-              <FileText className="w-4 h-4 inline mr-1" />
+              <FileText className="w-5 h-5 inline mr-2" />
               Manuel PDF
             </button>
             <button
               onClick={() => { setActiveTab('image'); setFile(null); }}
-              className={`flex-1 py-3 px-3 font-semibold text-sm ${activeTab === 'image' ? 'text-indigo-600 border-b-2 border-indigo-600' : 'text-gray-500'}`}
+              className={`flex-1 py-4 px-4 font-bold text-sm transition-all duration-300 ${
+                activeTab === 'image' 
+                  ? 'text-purple-600 border-b-4 border-purple-600 bg-white scale-105' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+              }`}
             >
-              <Camera className="w-4 h-4 inline mr-1" />
+              <Camera className="w-5 h-5 inline mr-2" />
               Photo/Scanner
             </button>
           </div>
 
-          <div className="p-4">
+          <div className="p-6 bg-gradient-to-br from-white to-gray-50">
             {activeTab === 'pdf' ? (
-              <div>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
-                  <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <div className="space-y-4">
+                <div className="border-3 border-dashed border-indigo-300 rounded-2xl p-8 text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-300 cursor-pointer group bg-gradient-to-br from-indigo-50/30 to-purple-50/30">
+                  <Upload className="w-12 h-12 text-indigo-400 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                   <label className="cursor-pointer">
-                    <span className="text-indigo-600 font-semibold text-sm">Sélectionner un PDF</span>
+                    <span className="text-indigo-600 font-bold text-base hover:text-indigo-700">
+                      📄 Sélectionner un PDF
+                    </span>
                     <input type="file" accept="application/pdf" onChange={handleFileChange} className="hidden" />
                   </label>
-                  {file && <div className="mt-3 text-sm text-gray-600 break-all px-2">{file.name}</div>}
+                  {file && (
+                    <div className="mt-4 p-3 bg-white rounded-xl text-sm text-gray-700 font-medium shadow-sm border border-indigo-200">
+                      ✅ {file.name}
+                    </div>
+                  )}
                 </div>
                 {file && (
                   <button 
                     onClick={analyzePDF} 
                     disabled={loading} 
-                    className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-gray-400 transition-colors text-sm"
+                    className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:scale-100 text-base"
                   >
-                    {loading ? 'Analyse en cours...' : 'Analyser le manuel'}
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Analyse en cours...
+                      </span>
+                    ) : (
+                      '🚀 Analyser le manuel'
+                    )}
                   </button>
                 )}
               </div>
             ) : (
               <div>
                 {!cameraActive ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <button 
                       onClick={startCamera} 
-                      className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-sm"
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-base"
                     >
-                      <Camera className="w-5 h-5 inline mr-2" />
-                      Activer la caméra
+                      <Camera className="w-6 h-6 inline mr-2" />
+                      📸 Activer la caméra
                     </button>
-                    <div className="text-center text-gray-500 text-xs">ou</div>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
-                      <ImagePlus className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t-2 border-gray-300"></div>
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-gradient-to-br from-white to-gray-50 px-4 text-gray-500 font-medium text-sm">ou</span>
+                      </div>
+                    </div>
+                    <div className="border-3 border-dashed border-purple-300 rounded-2xl p-8 text-center hover:border-purple-500 hover:bg-purple-50/50 transition-all duration-300 cursor-pointer group bg-gradient-to-br from-purple-50/30 to-pink-50/30">
+                      <ImagePlus className="w-12 h-12 text-purple-400 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                       <label className="cursor-pointer">
-                        <span className="text-indigo-600 font-semibold text-sm">Télécharger une image</span>
+                        <span className="text-purple-600 font-bold text-base hover:text-purple-700">
+                          🖼️ Télécharger une image
+                        </span>
                         <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                       </label>
                     </div>
                     {imagePreview && (
-                      <div>
-                        <img src={imagePreview} alt="Aperçu" className="w-full h-48 object-contain rounded-lg border border-gray-200" />
+                      <div className="space-y-4 animate-fadeIn">
+                        <div className="relative rounded-2xl overflow-hidden border-4 border-purple-200 shadow-lg">
+                          <img src={imagePreview} alt="Aperçu" className="w-full h-52 object-contain bg-gray-100" />
+                        </div>
                         <button 
                           onClick={analyzeImage} 
                           disabled={loading} 
-                          className="w-full mt-3 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-gray-400 transition-colors text-sm"
+                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:scale-100 text-base"
                         >
-                          {loading ? 'Analyse en cours...' : 'Analyser la couverture'}
+                          {loading ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Analyse en cours...
+                            </span>
+                          ) : (
+                            '🔍 Analyser la couverture'
+                          )}
                         </button>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg" />
+                  <div className="space-y-4 animate-fadeIn">
+                    <div className="rounded-2xl overflow-hidden border-4 border-purple-300 shadow-xl">
+                      <video ref={videoRef} autoPlay playsInline className="w-full" />
+                    </div>
                     <div className="flex gap-3">
                       <button 
                         onClick={capturePhoto} 
-                        className="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-sm"
+                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
                         📸 Capturer
                       </button>
                       <button 
                         onClick={stopCamera} 
-                        className="flex-1 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition-colors text-sm"
+                        className="flex-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white py-4 rounded-xl font-bold hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
-                        Annuler
+                        ✖️ Annuler
                       </button>
                     </div>
                   </div>
@@ -220,45 +267,66 @@ export default function ManualSummarizerDemo() {
           </div>
         </div>
 
+        {/* Results avec style amélioré */}
         {summary && (
-          <div className="space-y-3 animate-fadeIn">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 px-1">{summary.product}</h2>
+          <div className="space-y-4 animate-slideUp">
+            <div className="text-center bg-white rounded-2xl p-5 shadow-lg border-2 border-indigo-200">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                {summary.product}
+              </h2>
+            </div>
             
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <div className="flex gap-3">
-                <Zap className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-lg p-5 border-2 border-green-200 hover:shadow-xl transition-shadow duration-300">
+              <div className="flex gap-4">
+                <div className="bg-green-100 rounded-full p-3 h-fit">
+                  <Zap className="w-6 h-6 text-green-600" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-800 mb-2 text-sm">⚡ Démarrage rapide</h3>
+                  <h3 className="font-bold text-green-800 mb-2 text-base flex items-center gap-2">
+                    ⚡ Démarrage rapide
+                  </h3>
                   <p className="text-gray-700 text-sm leading-relaxed">{summary.quickStart}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <div className="flex gap-3">
-                <Shield className="w-5 h-5 text-red-600 flex-shrink-0 mt-1" />
+            <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl shadow-lg p-5 border-2 border-red-200 hover:shadow-xl transition-shadow duration-300">
+              <div className="flex gap-4">
+                <div className="bg-red-100 rounded-full p-3 h-fit">
+                  <Shield className="w-6 h-6 text-red-600" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-800 mb-2 text-sm">🛡️ Sécurité</h3>
+                  <h3 className="font-bold text-red-800 mb-2 text-base flex items-center gap-2">
+                    🛡️ Sécurité
+                  </h3>
                   <p className="text-gray-700 text-sm leading-relaxed">{summary.safety}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <div className="flex gap-3">
-                <Wrench className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl shadow-lg p-5 border-2 border-blue-200 hover:shadow-xl transition-shadow duration-300">
+              <div className="flex gap-4">
+                <div className="bg-blue-100 rounded-full p-3 h-fit">
+                  <Wrench className="w-6 h-6 text-blue-600" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-800 mb-2 text-sm">🔧 Entretien</h3>
+                  <h3 className="font-bold text-blue-800 mb-2 text-base flex items-center gap-2">
+                    🔧 Entretien
+                  </h3>
                   <p className="text-gray-700 text-sm leading-relaxed">{summary.maintenance}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <div className="flex gap-3">
-                <FileText className="w-5 h-5 text-orange-600 flex-shrink-0 mt-1" />
+            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl shadow-lg p-5 border-2 border-orange-200 hover:shadow-xl transition-shadow duration-300">
+              <div className="flex gap-4">
+                <div className="bg-orange-100 rounded-full p-3 h-fit">
+                  <FileText className="w-6 h-6 text-orange-600" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-800 mb-2 text-sm">🔍 Dépannage</h3>
+                  <h3 className="font-bold text-orange-800 mb-2 text-base flex items-center gap-2">
+                    🔍 Dépannage
+                  </h3>
                   <p className="text-gray-700 text-sm leading-relaxed">{summary.troubleshooting}</p>
                 </div>
               </div>
@@ -269,11 +337,39 @@ export default function ManualSummarizerDemo() {
 
       <style jsx>{`
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
         .animate-fadeIn {
           animation: fadeIn 0.5s ease-out;
+        }
+        .animate-slideDown {
+          animation: slideDown 0.6s ease-out;
+        }
+        .animate-slideUp {
+          animation: slideUp 0.6s ease-out;
+        }
+        .animate-bounce {
+          animation: bounce 2s ease-in-out infinite;
+        }
+        .animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
       `}</style>
     </div>
