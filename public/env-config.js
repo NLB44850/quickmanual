@@ -1,1 +1,1 @@
-window.QuickManual_api_key = "%QuickManual_api_key%";
+window.REACT_APP_ANTHROPIC_API_KEY = "%REACT_APP_ANTHROPIC_API_KEY%";
